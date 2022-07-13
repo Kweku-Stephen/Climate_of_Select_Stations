@@ -57,7 +57,7 @@ lapply(
 if (!dir.exists("outputs")) dir.create("outputs")
 
 
-# Plotting mean monthly Rainfall
+# Plotting mean monthly Rainfall ####
 require(ggplot2, quietly = TRUE)
 # require(patchwork)
 
