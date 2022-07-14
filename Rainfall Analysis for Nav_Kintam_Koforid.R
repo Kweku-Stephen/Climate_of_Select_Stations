@@ -6,7 +6,8 @@ Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 # IMporting all three Stations
 dir(pattern = "Koforidu|Kintampo|navrong") |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
-		read.csv # Reading in output of "dir"
+		read.csv, # Reading in output of "dir"
+		na.strings = -99.9
 	) |> 
 	lapply(
 		# Looping the function below on each element of the list returned from above
