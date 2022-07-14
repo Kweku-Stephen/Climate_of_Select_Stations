@@ -1,9 +1,8 @@
 #############################################################################################################
 # Creating Directories ####
-for ( i in c("Rainfall", "Max_Tmp", "Min_Tmp", "outputs")){
+for ( i in c("Data_outputs", "Plots_outputs")){
 	if (!dir.exists(i)) dir.create(i)
 }
-
 
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
@@ -112,7 +111,7 @@ gridExtra::grid.arrange(
 # Saving above plot to disk
 dev.copy(
 	png, 
-	filename = "outputs/Mean Monthly Rainfall.png",
+	filename = "Plots_outputs/Mean Monthly Rainfall.png",
 	width = 1450,
 	height = 850
 )
@@ -238,7 +237,7 @@ gridExtra::grid.arrange(
 # Saving above plot to disk
 dev.copy(
 	png, 
-	filename = "outputs/Rainfall Total Anomaly.png",
+	filename = "Plots_outputs/Rainfall Total Anomaly.png",
 	width = 1450,
 	height = 850
 )
@@ -362,7 +361,7 @@ gridExtra::grid.arrange(
 # Saving above plot to disk
 dev.copy(
 	png, 
-	filename = "outputs/Heavy Rainall events.png",
+	filename = "Plots_outputs/Heavy Rainall events.png",
 	width = 1450,
 	height = 850
 )
@@ -489,7 +488,7 @@ gridExtra::grid.arrange(
 # Saving above plot to disk
 dev.copy(
 	png, 
-	filename = "outputs/Rainall events.png",
+	filename = "Plots_outputs/Rainall events.png",
 	width = 1450,
 	height = 850
 )
