@@ -4,7 +4,7 @@ Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 
 # DATA IMPORT AND LIL RESHAPING
 # IMporting all three Stations
-dir(pattern = "Koforidu|Kintampo|navrong") |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
+dir(path = "Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
 		read.csv, # Reading in output of "dir"
 		na.strings = -99.9
