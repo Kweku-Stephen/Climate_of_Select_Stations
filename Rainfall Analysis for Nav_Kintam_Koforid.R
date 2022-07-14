@@ -1,10 +1,16 @@
 #############################################################################################################
+# Creating Directories ####
+for ( i in c("Rainfall", "Max_Tmp", "Min_Tmp", "outputs")){
+	if (!dir.exists(i)) dir.create(i)
+}
+
+
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 
 # DATA IMPORT AND LIL RESHAPING
 # IMporting all three Stations
-dir(path = "Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
+dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
 		read.csv, # Reading in output of "dir"
 		na.strings = -99.9
@@ -52,10 +58,6 @@ lapply(
 	lapply(
 		\(data = "") data[match(month.name, data[ ,1]), ]
 	) -> mean_monthly_Rainfall
-
-
-# Creating directory for outputs ####
-if (!dir.exists("outputs")) dir.create("outputs")
 
 
 # Plotting mean monthly Rainfall ####
