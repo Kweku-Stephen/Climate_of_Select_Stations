@@ -1,6 +1,7 @@
 #############################################################################################################
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
+require(magrittr)
 
 # DATA IMPORT AND LIL RESHAPING
 # IMporting all three Stations
@@ -165,7 +166,7 @@ Annual_Rainfall_Anomaly <- lapply(
 		data = data, 
 		FUN = sum, 
 		na.rm = T
-	) %>% 
+	) |> 
 		setNames(c("Year", "Rain")) %>%
 		transform(Year = as.numeric(.[ ,1]))
 ) |> 
