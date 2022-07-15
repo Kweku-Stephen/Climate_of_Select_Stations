@@ -4,7 +4,7 @@ for ( i in c("Data_outputs", "Plots_outputs")){
 	if (!dir.exists(i)) dir.create(i) else message("Already Created")
 }
 
-# loading magrittr
+# loading magrittr 
 require(magrittr)
 
 # Introducing the pipebind operator
