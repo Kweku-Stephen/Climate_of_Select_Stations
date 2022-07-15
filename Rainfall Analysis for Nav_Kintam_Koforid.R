@@ -1,16 +1,17 @@
 #############################################################################################################
 # Creating Directories ####
-require(magrittr)
-
 for ( i in c("Data_outputs", "Plots_outputs")){
 	if (!dir.exists(i)) dir.create(i) else message("Already Created")
 }
+
+# loading magrittr
+require(magrittr)
 
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 
 # DATA IMPORT AND LIL RESHAPING
-# IMporting all three Stations
+# Importing all three Stations
 dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
 		read.csv, # Reading in output of "dir"
