@@ -1,7 +1,9 @@
 #############################################################################################################
 # Creating Directories ####
+require(magrittr)
+
 for ( i in c("Data_outputs", "Plots_outputs")){
-	if (!dir.exists(i)) dir.create(i)
+	if (!dir.exists(i)) dir.create(i) else message("Already Created")
 }
 
 # Introducing the pipebind operator
@@ -30,7 +32,7 @@ dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.name
 # for efficiency, use rio::import_list instead of lapply to read the datasets into R
 
 # Changing class of Koforidua Rain variable to "numeric"
-Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
+#Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
 
 
 
@@ -537,4 +539,30 @@ data.frame(
 
 
 
-# Logest Dry Spell ####
+# Longest Dry Spell Per year for All Stations ####
+# Run length encoding -- function to run length of zeroes in a vector
+runs <- function(vec = ""){
+	rle(vec) |> . => 
+		data.frame(v = .$value, l = .$lengths) %>% 
+		.[.$v == 0.0, ] %>% 
+		.[.$l == max(.$l), ]
+}
+
+# Building a function which calls runs to loop over the vector elements of a list
+runs_1 <- function(list = "") lapply(list, runs) |> . => do.call(rbind, .)
+
+# calling runs_1 to loop over the elements of the list "Stations"
+ # Stations is a two level nested list
+lapply(
+	Stations,
+	\(data = "") split(data[ ,"Rain"], as.factor(format(data[ ,"Date"], "%Y"))) %>% 
+		lapply(\(vec) vec[!is.na(vec)])
+) |> 
+	lapply(
+	runs_1
+)
+
+
+
+# Onset of the Season ####
+
