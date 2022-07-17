@@ -597,4 +597,3 @@ Longest_Dry_Spells |>
 
 # Onset of the Season ####
 
-strsplit(rownames(kof), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric() -> a
