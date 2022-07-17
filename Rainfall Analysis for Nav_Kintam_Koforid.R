@@ -30,10 +30,31 @@ dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.name
 	) |> 
 	setNames(c("Kintampo", "Koforidua", "Navrongo")) -> Stations # Renaming the list/output above
 
-# for efficiency, use rio::import_list instead of lapply to read the datasets into R
+# for efficiency, use rio::import_list instead of combining "lapply" and "read.csv" to read the datasets into R
 
 # Changing class of Koforidua Rain variable to "numeric"
 #Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
+
+
+# Percentage of Missing Values for each year conditioned on Met Stations ####
+`NA_%`  <- function(vec = "") {
+	((as.character(is.na(vec)) %>% .[. == "TRUE"] %>% length * 100) / length(vec)) %>% 
+		round(digits = 2) %>% 
+		paste0("%")
+}
+
+# Building a function which calls `NA_%` to loop over the vector elements of a list
+`NA_%_1` <- function(list = "") lapply(list, `NA_%`) |> . => do.call(rbind, .)
+
+# calling `NA_%_1` to loop over the elements of the list "Stations"
+# Stations is a two level nested list
+lapply(
+	Stations,
+	\(data = "") split(data[ ,"Rain"], as.factor(format(data[ ,"Date"], "%Y"))) 
+) |> 
+	lapply(
+		`NA_%_1`
+	) -> perc_NA
 
 
 
@@ -561,9 +582,19 @@ lapply(
 ) |> 
 	lapply(
 	runs_1
-)
+) -> Longest_Dry_Spells
 
+# Removing duplicated years, thus, years of 2 or more maximum values ####
+Longest_Dry_Spells |> 
+	lapply(
+		\(data = ""){
+			if (!duplicated(strsplit(rownames(data), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric())){
+				
+			}
+		}
+	)
 
 
 # Onset of the Season ####
 
+strsplit(rownames(kof), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric() -> a
