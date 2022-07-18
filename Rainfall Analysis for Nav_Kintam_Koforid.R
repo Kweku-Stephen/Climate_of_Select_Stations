@@ -584,16 +584,88 @@ lapply(
 	runs_1
 ) -> Longest_Dry_Spells
 
+
 # Removing duplicated years, thus, years of 2 or more maximum values ####
-Longest_Dry_Spells |> 
+Longest_Dry_Spells %<>% 
 	lapply(
 		\(data = ""){
-			if (!duplicated(strsplit(rownames(data), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric())){
-				
-			}
+			if (any(grepl("[0-9]+\\.[0-9]", rownames(data)))){
+				strsplit(rownames(data), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric() |> . =>
+					data.frame(Year = ., length = data[ ,2]) |> 
+					dplyr::filter(!duplicated(Year))
+			} else data
 		}
 	)
 
+
+# Plotting Longest Dry Spell ####
+# Kintampo Annual Rainy Days
+ggplot(data = Longest_Dry_Spells[["Kintampo"]], aes(x = Year, y = Rain)) + 
+	geom_line(lwd = 2, col = "darkblue") +
+	geom_smooth(method = "lm", col = "red") +
+	annotate("text", x = 1999, y = 120, label = paste(
+		"p-value = ", 
+		round((unlist(Kendall::MannKendall(Annual_rain_events[["Kintampo"]][ ,2])))["sl"], 2)),
+		size = 10) +
+	scale_x_continuous(breaks = seq(from = 1944, to = 2021, by = 11)) +
+	ggtitle("Number of Rain events in Kintampo \n 1944 - 2021") +
+	xlab("Year") +
+	ylab("Number of Days") +
+	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
+		 axis.title = element_text(size = 22, face = "bold"),
+		 axis.text = element_text(size = 20)) -> Kintampo_rain_events
+
+
+
+# Koforidua annual heavy events
+ggplot(data = Annual_rain_events[["Koforidua"]], aes(x = Year, y = Rain)) + 
+	geom_line(lwd = 2, col = "darkblue") +
+	geom_smooth(method = "lm", col = "red") +
+	annotate("text", x = 2000, y = 130, label = paste(
+		"p-value = ", 
+		round((unlist(Kendall::MannKendall(Annual_heavy_events[["Koforidua"]][ ,2])))["sl"], 2)),
+		size = 10) +
+	scale_x_continuous(breaks = seq(1965, 2021, by = 7)) +
+	ggtitle("Number of Rain events in Koforidua \n 1965 - 2021") +
+	xlab("Year") +
+	ylab("Number of Days") +
+	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
+		 axis.title = element_text(size = 22, face = "bold"),
+		 axis.text = element_text(size = 20)) -> Koforidua_rain_events
+
+
+
+# Navrongo annual heavy evens
+ggplot(data = Annual_rain_events[["Navrongo"]], aes(x = Year, y = Rain)) + 
+	geom_line(lwd = 2, col = "darkblue") +
+	geom_smooth(method = "lm", col = "red") +
+	annotate("text", x = 1995, y = 85, label = paste(
+		"p-value = ", 
+		round((unlist(Kendall::MannKendall(Annual_heavy_events[["Navrongo"]][ ,2])))["sl"], 2)),
+		size = 10) +
+	scale_x_continuous(breaks = seq(1946, 2021, by = 9)) +
+	ggtitle("Number of Rain events in Navrongo \n 1946 - 2021") +
+	xlab("Year") +
+	ylab("Number of Days") +
+	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
+		 axis.title = element_text(size = 22, face = "bold"),
+		 axis.text = element_text(size = 20)) -> Navrongo_rain_events
+
+
+# Composites of Raifnall Anomaly
+gridExtra::grid.arrange(
+	Kintampo_rain_events, Koforidua_rain_events, Navrongo_rain_events,
+	ncol = 2, nrow = 2
+)
+
+# Saving above plot to disk
+dev.copy(
+	png, 
+	filename = "Plots_outputs/Rainall events.png",
+	width = 1450,
+	height = 850
+)
+dev.off()
 
 # Onset of the Season ####
 
