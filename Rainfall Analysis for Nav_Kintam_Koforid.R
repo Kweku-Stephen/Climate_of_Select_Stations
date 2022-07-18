@@ -589,10 +589,16 @@ lapply(
 Longest_Dry_Spells %<>% 
 	lapply(
 		\(data = ""){
-			if (any(grepl("[0-9]+\\.[0-9]", rownames(data)))){
+			if (any(grepl("[0-9]+\\.[0-9]+", rownames(data)))){
+				
+				#splitting, extracting, conversion of the output vector to a dataframe
 				strsplit(rownames(data), "\\.") |> sapply(\(vec = "") vec[1]) |> as.numeric() |> . =>
-					data.frame(Year = ., length = data[ ,2]) |> 
-					dplyr::filter(!duplicated(Year))
+					data.frame(Year = ., l = data[ ,2]) |> 
+					subset(!duplicated(Year)) |> . => set_rownames(., .[ ,1]) -> rs
+				
+				# setting column 1 of rs to `0` and renaming variables
+				(rs[ ,1] <- c(l = 0)); setNames(rs, c("v", "l"))
+				
 			} else data
 		}
 	)
@@ -600,7 +606,7 @@ Longest_Dry_Spells %<>%
 
 # Plotting Longest Dry Spell ####
 # Kintampo Annual Rainy Days
-ggplot(data = Longest_Dry_Spells[["Kintampo"]], aes(x = Year, y = Rain)) + 
+ggplot(data = Longest_Dry_Spells[["Kintampo"]], aes(x = rownames(Longest_Dry_Spells[["Kintampo"]]), y = l)) + 
 	geom_line(lwd = 2, col = "darkblue") +
 	geom_smooth(method = "lm", col = "red") +
 	annotate("text", x = 1999, y = 120, label = paste(
