@@ -10,7 +10,12 @@ require(magrittr)
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 
-# DATA IMPORT AND LIL RESHAPING
+
+
+
+
+
+# DATA IMPORT AND LIL RESHAPING ####
 # Importing all three Stations
 dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
@@ -54,7 +59,7 @@ lapply(
 ) |> 
 	lapply(
 		`NA_%_1`
-	) -> perc_NA
+	) #-> perc_NA
 
 
 
@@ -606,72 +611,75 @@ Longest_Dry_Spells %<>%
 
 # Plotting Longest Dry Spell ####
 # Kintampo Annual Rainy Days
-ggplot(data = Longest_Dry_Spells[["Kintampo"]], aes(x = rownames(Longest_Dry_Spells[["Kintampo"]]), y = l)) + 
+ggplot(data = Longest_Dry_Spells[["Kintampo"]], 
+	  aes(x = as.numeric(rownames(Longest_Dry_Spells[["Kintampo"]])), y = l)) + 
 	geom_line(lwd = 2, col = "darkblue") +
 	geom_smooth(method = "lm", col = "red") +
-	annotate("text", x = 1999, y = 120, label = paste(
+	annotate("text", x = 1999, y = 80, label = paste(
 		"p-value = ", 
-		round((unlist(Kendall::MannKendall(Annual_rain_events[["Kintampo"]][ ,2])))["sl"], 2)),
+		round((unlist(Kendall::MannKendall(Longest_Dry_Spells[["Kintampo"]][ ,2])))["sl"], 2)),
 		size = 10) +
-	scale_x_continuous(breaks = seq(from = 1944, to = 2021, by = 11)) +
-	ggtitle("Number of Rain events in Kintampo \n 1944 - 2021") +
+	scale_x_continuous(breaks = seq(from = 1980, to = 2021, by = 8)) +
+	ggtitle("Longest Dry Spell of Kintampo \n 1980 - 2021") +
 	xlab("Year") +
 	ylab("Number of Days") +
 	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
 		 axis.title = element_text(size = 22, face = "bold"),
-		 axis.text = element_text(size = 20)) -> Kintampo_rain_events
+		 axis.text = element_text(size = 20)) -> Kintampo_Longest_Dryspell
 
 
 
 # Koforidua annual heavy events
-ggplot(data = Annual_rain_events[["Koforidua"]], aes(x = Year, y = Rain)) + 
+ggplot(data = Longest_Dry_Spells[["Koforidua"]], 
+	  aes(x = as.numeric(rownames(Longest_Dry_Spells[["Koforidua"]])), y = l)) + 
 	geom_line(lwd = 2, col = "darkblue") +
 	geom_smooth(method = "lm", col = "red") +
-	annotate("text", x = 2000, y = 130, label = paste(
+	annotate("text", x = 2000, y = 60, label = paste(
 		"p-value = ", 
-		round((unlist(Kendall::MannKendall(Annual_heavy_events[["Koforidua"]][ ,2])))["sl"], 2)),
+		round((unlist(Kendall::MannKendall(Longest_Dry_Spells[["Koforidua"]][ ,2])))["sl"], 2)),
 		size = 10) +
-	scale_x_continuous(breaks = seq(1965, 2021, by = 7)) +
-	ggtitle("Number of Rain events in Koforidua \n 1965 - 2021") +
+	scale_x_continuous(breaks = seq(1980, 2021, by = 8)) +
+	ggtitle("Longest Dry Spell of Koforidua \n 1980 - 2021") +
 	xlab("Year") +
 	ylab("Number of Days") +
 	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
 		 axis.title = element_text(size = 22, face = "bold"),
-		 axis.text = element_text(size = 20)) -> Koforidua_rain_events
+		 axis.text = element_text(size = 20)) -> Koforidua_Longest_DrySpell
 
 
 
 # Navrongo annual heavy evens
-ggplot(data = Annual_rain_events[["Navrongo"]], aes(x = Year, y = Rain)) + 
+ggplot(data = Longest_Dry_Spells[["Navrongo"]], 
+	  aes(x = as.numeric(rownames(Longest_Dry_Spells[["Navrongo"]])), y = l)) + 
 	geom_line(lwd = 2, col = "darkblue") +
 	geom_smooth(method = "lm", col = "red") +
-	annotate("text", x = 1995, y = 85, label = paste(
+	annotate("text", x = 1995, y = 110, label = paste(
 		"p-value = ", 
-		round((unlist(Kendall::MannKendall(Annual_heavy_events[["Navrongo"]][ ,2])))["sl"], 2)),
+		round((unlist(Kendall::MannKendall(Longest_Dry_Spells[["Navrongo"]][ ,2])))["sl"], 2)),
 		size = 10) +
-	scale_x_continuous(breaks = seq(1946, 2021, by = 9)) +
-	ggtitle("Number of Rain events in Navrongo \n 1946 - 2021") +
+	scale_x_continuous(breaks = seq(1980, 2021, by = 9)) +
+	ggtitle("Longest Dry Spell of Navrongo \n 1980 - 2021") +
 	xlab("Year") +
 	ylab("Number of Days") +
 	theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
 		 axis.title = element_text(size = 22, face = "bold"),
-		 axis.text = element_text(size = 20)) -> Navrongo_rain_events
+		 axis.text = element_text(size = 20)) -> Navrongo_Longest_DrySpell
 
 
 # Composites of Raifnall Anomaly
-gridExtra::grid.arrange(
-	Kintampo_rain_events, Koforidua_rain_events, Navrongo_rain_events,
-	ncol = 2, nrow = 2
-)
-
-# Saving above plot to disk
-dev.copy(
-	png, 
-	filename = "Plots_outputs/Rainall events.png",
-	width = 1450,
-	height = 850
-)
-dev.off()
+# gridExtra::grid.arrange(
+# 	Kintampo_rain_events, Koforidua_rain_events, Navrongo_rain_events,
+# 	ncol = 2, nrow = 2
+# )
+# 
+# # Saving above plot to disk
+# dev.copy(
+# 	png, 
+# 	filename = "Plots_outputs/Rainall events.png",
+# 	width = 1450,
+# 	height = 850
+# )
+# dev.off()
 
 # Onset of the Season ####
 
