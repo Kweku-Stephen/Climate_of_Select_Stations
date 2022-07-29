@@ -799,14 +799,18 @@ runs_1_wet <- function(list = "") lapply(list, runs_wet) |> . => do.call(rbind, 
 
 # calling runs_1 to loop over the elements of the list "Stations"
 # Stations is a two level nested list
-lapply(
-	Stations,
-	\(data = "") split(data[ ,"Rain"], as.factor(format(data[ ,"Date"], "%Y"))) %>% 
-		lapply(\(vec) vec[!is.na(vec)])
-) |> 
+Stations |> 
 	lapply(
-		runs_1_wet
-	) -> Longest_wet_spell
+		# Ananymous function to subset the months April to October only for each year
+		\(data = "", Date = "") {
+			data[
+				format(data[ ,Date], "%b") %in% month.abb[4:10] & !is.na(data[ ,Date]) & !is.na(data[ ,"Rain"]), 
+			]
+		},
+		Date = "Date"
+	) |> 
+	lapply(\(data = "") split(data[ ,"Rain"], as.factor(format(data[ ,"Date"], "%Y"))) ) |> 
+	lapply(runs_1_wet) -> Longest_wet_spell
 
 
 # Removing duplicated years, thus, years of 2 or more maximum values ####
@@ -828,9 +832,3 @@ Longest_wet_spell %<>%
 			} else data
 		}
 	)
-
-
-
-
-
-
