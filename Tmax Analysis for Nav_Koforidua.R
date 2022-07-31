@@ -69,8 +69,9 @@ dir(path = "~/Climate_of_Select_Stations/Max_Tmp", pattern = ".csv$", full.names
 # Stations is a two level nested list
 lapply(
   Stations_Tmax,
+  # Lopping the ananymous function below on the elements of the list "stations_Tmax"
   \(data = "") split(data[ ,"Tmax"], as.factor(format(data[ ,"Date"], "%Y"))) 
-) |> 
+) |> # Piping the output from above as input to the `NA_%_1` function in the looping construct below 
   lapply(
     `NA_%_1`
   ) #-> perc_NA_tmax
@@ -81,22 +82,37 @@ lapply(
 # Computing Annual Minimum Temperature ####
 lapply(
   Stations_Tmax,
+  # Ananymous function to compute mean annual max temp as a function of year
   \(data = "") {
     aggregate(
       Tmax ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
       FUN = mean,
-      na.rm = T
+      na.rm = TRUE
     ) |> 
+      # Transforming the year variable of the dataframe returned from above into a numeric vector
       transform(`format(data[, "Date"], format = "%Y")` = as.numeric(`format(data[, "Date"], format = "%Y")`)) |> 
+      # Renaming column of the data returned from above
       setNames(c("Year", "Tmax"))
   }
-) -> Annual_Max_Temp
+) -> Annual_Max_Temp # Name of the returned list form the looping construct above
+
+# Setting annual mean temp values for the year 2007 and 2008 from Koforidua because missing data is above 50%
+Annual_Max_Temp[["Koforidua"]][27:28, 2] <- NA
+
+# Imputing missing values the kalman filter 
+Annual_Max_Temp[["Koforidua"]][ ,"Tmax"] <- imputeTS::na_kalman(
+  Annual_Max_Temp[["Koforidua"]][ ,"Tmax"], 
+  model = "StructTS", 
+  smooth = TRUE,
+  nit = -1
+)
+
 
 # Plotting Annual Min Temp
-ggplot(data = Annual_Max_Tmp[["Koforidua"]], aes(x = Year, y = Tmax)) + 
+ggplot(data = Annual_Max_Temp[["Koforidua"]], aes(x = Year, y = Tmax)) + 
   geom_line(lwd = 2, col = "firebrick") +
-  scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
+  #scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
   ggtitle("Mean Maximum Temperature of Koforidua \n 1980 - 2021") +
   xlab("Month") +
   ylab(expression("Temp ("~degree*C*")")) +
@@ -117,10 +133,10 @@ ggplot(data = Annual_Max_Tmp[["Koforidua"]], aes(x = Year, y = Tmax)) +
 #         axis.title = element_text(size = 22, face = "bold"),
 #         axis.text = element_text(size = 20)) -> Koforidua
 
-Navrongo <- ggplot(data = Annual_max_Tmp[["Navrongo"]], aes(x = Year, y = Tmax)) +
+ggplot(data = Annual_Max_Temp[["Navrongo"]], aes(x = Year, y = Tmax)) +
   geom_line(lwd = 2, col = "firebrick") +
-  scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
-  ggtitle("Monthly Maximum Temperature of Navrongo \n 1980 - 2021") +
+  #scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
+  ggtitle("Mean Maximum Temperature of Navrongo \n 1980 - 2021") +
   xlab("Month") +
   ylab(expression("Temp ("~degree*C*")")) +
   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
@@ -144,7 +160,7 @@ lapply(
       Tmax ~ format(data[ ,"Date"], format = "%B"), 
       data = data, 
       FUN = mean, 
-      na.rm = T
+      na.rm = TRUE
     ) #|> . =>
       # aggregate(
       #   Rain ~ `format(data[, "Date"], format = "%B")`,
@@ -182,7 +198,7 @@ ggplot(data = Monthly_Tmax[["Koforidua"]], aes(x = Date, y = Tmax)) +
 #         axis.title = element_text(size = 22, face = "bold"),
 #         axis.text = element_text(size = 20)) -> Koforidua
 
-Navrongo <- ggplot(data = Monthly_Tmax[["Navrongo"]], aes(x = Date, y = Tmax)) +
+ggplot(data = Monthly_Tmax[["Navrongo"]], aes(x = Date, y = Tmax)) +
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
   ggtitle("Monthly Maximum Temperature of Navrongo \n 1980 - 2021") +
@@ -208,8 +224,8 @@ Annual_MaxTmp_Anomaly <- lapply(
     Tmax ~ format(data[ ,"Date"], format = "%Y"), 
     data = data, 
     FUN = mean, 
-    na.rm = T
-  ) %>% 
+    na.rm = TRUE
+  ) |>  
     setNames(c("Year", "Tmax")) %>%
     transform(Year = as.numeric(.[ ,"Year"]))
 ) |> 
@@ -218,7 +234,7 @@ Annual_MaxTmp_Anomaly <- lapply(
     \(data = "") {
       data.frame(
         Year = data[ ,1], 
-        Deviations = (data[ ,"Tmax"] - mean(data[ ,"Tmax"], na.rm = T)) / sd(data[ ,"Tmax"], na.rm = T)
+        Deviations = (data[ ,"Tmax"] - mean(data[ ,"Tmax"], na.rm = TRUE)) / sd(data[ ,"Tmax"], na.rm = TRUE)
       )
     }
   )
@@ -287,21 +303,31 @@ dev.off()
 
 
 
-# Maximum and Minimum of Maximum Temperature ####
+# Maximum of Maximum Temperature ####
 lapply(
   Stations_Tmax, # Data/List to loop over
-  
   # aninymous function to extract max temps in the 90th percentile
   \(data = "") {
     aggregate(
       Tmax ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
-      FUN = \(vec = "") length(vec[vec > quantile(vec, probs = 0.9, na.rm = T)])
+      FUN = \(vec = "") length(vec[vec > quantile(vec, probs = 0.9, na.rm = TRUE)])
     ) |> 
       setNames(c("Year", "Tmax")) |> 
       transform(Year = as.numeric(Year))
   }
 ) -> max_maximum_temp
+
+# Replacing the year 2007's Count with NA
+max_maximum_temp[["Koforidua"]][max_maximum_temp[["Koforidua"]][ ,"Year"] == 2007, "Tmax"] <- NA
+
+# Imputing missing values in the Koforidua max tmp dataframe with the max_maximum_temp list
+max_maximum_temp[["Koforidua"]][ ,"Tmax"] <- imputeTS::na_kalman(
+    max_maximum_temp[["Koforidua"]][ ,"Tmax"],
+    model = "StructTS", 
+    smooth = TRUE,
+    nit = -1
+  )
 
 
 # Plotting 
@@ -311,14 +337,14 @@ ggplot(data = max_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
   labs(
     title = "Number of Days with Max Tmp in the 90th percentile \n 1980 - 2021", 
     x = "Year", 
-    y = expression("Temperature("~degree*C*")")
+    y = "Number of Days"
   ) + 
   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20))
 
 
-# Maximum and Minimum of Maximum Temperature ####
+# Minimum of Maximum Temperature ####
 lapply(
   Stations_Tmax, # Data/List to loop over
   
@@ -327,12 +353,23 @@ lapply(
     aggregate(
       Tmax ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
-      FUN = \(vec = "") length(vec[vec < quantile(vec, probs = 0.1, na.rm = T)])
+      FUN = \(vec = "") length(vec[vec < quantile(vec, probs = 0.1, na.rm = TRUE)])
     ) |> 
       setNames(c("Year", "Tmax")) |> 
       transform(Year = as.numeric(Year))
   }
 ) -> min_maximum_temp
+
+# Replacing the year 2007's Count with NA
+min_maximum_temp[["Koforidua"]][min_maximum_temp[["Koforidua"]][ ,"Year"] == 2007, "Tmax"] <- NA
+
+# Imputing missing values in the Koforidua max tmp dataframe with the max_maximum_temp list
+min_maximum_temp[["Koforidua"]][ ,"Tmax"] <- imputeTS::na_kalman(
+  min_maximum_temp[["Koforidua"]][ ,"Tmax"],
+  model = "StructTS", 
+  smooth = TRUE,
+  nit = -1
+)
 
 # Plotting 
 ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
@@ -341,7 +378,7 @@ ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
   labs(
     title = "Number of Days with Max Tmp in the 10th percentile \n 1980 - 2021", 
     x = "Year", 
-    y = expression("Temperature("~degree*C*")")
+    y = "Number of Days"
   ) + 
   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
         axis.title = element_text(size = 22, face = "bold"),

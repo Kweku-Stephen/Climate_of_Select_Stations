@@ -6,7 +6,7 @@ for ( i in c("Data_outputs", "Plots_outputs")){
 # Introducing the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 
-# checking and loading packages ####
+# checking and loading packages #### 
 pkgs <- c("magrittr", "ggplot2")
 sapply(setdiff(pkgs, (.packages())), require, character.only = TRUE)
 
@@ -83,7 +83,7 @@ lapply(
       Tmin ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
       FUN = mean,
-      na.rm = T
+      na.rm = TRUE
     ) |> 
       transform(`format(data[, "Date"], format = "%Y")` = as.numeric(`format(data[, "Date"], format = "%Y")`)) |> 
       setNames(c("Year", "Tmin"))
@@ -116,7 +116,7 @@ ggplot(data = Annual_Min_Tmp[["Koforidua"]], aes(x = Year, y = Tmax)) +
 #         axis.title = element_text(size = 22, face = "bold"),
 #         axis.text = element_text(size = 20)) -> Koforidua
 
-Navrongo <- ggplot(data = Annual_min_Tmp[["Navrongo"]], aes(x = Year, y = Tmax)) +
+ggplot(data = Annual_min_Tmp[["Navrongo"]], aes(x = Year, y = Tmax)) +
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
   ggtitle("Monthly Minimum Temperature of Navrongo \n 1980 - 2021") +
@@ -133,8 +133,7 @@ gridExtra::grid.arrange(
   ncol = 2, nrow = 2
 )
 
-
-
+ 
 # Monthly Min Temp / climatology of the Stations ####
 # Computing mean monthly Max Temp Stations of the list/data "Stations"
 lapply(
@@ -144,7 +143,7 @@ lapply(
       Tmin ~ format(data[ ,"Date"], format = "%B"), 
       data = data, 
       FUN = mean, 
-      na.rm = T
+      na.rm = TRUE
     ) #|> . =>
     # aggregate(
     #   Rain ~ `format(data[, "Date"], format = "%B")`,
@@ -204,29 +203,70 @@ gridExtra::grid.arrange(
 )
 
 
-# Maximum and Minimum of Maximum Temperature ####
+# Annual Minimum Tmp Anomaly ####
+# Maximum Temperature Anomaly ####
+Annual_MinTmp_Anomaly <- lapply(
+  Stations_Tmin,
+  \(data = "") aggregate(
+    Tmin ~ format(data[ ,"Date"], format = "%Y"), 
+    data = data, 
+    FUN = mean, 
+    na.rm = TRUE
+  ) %>% 
+    setNames(c("Year", "Tmin")) %>%
+    transform(Year = as.numeric(.[ ,"Year"]))
+) |> 
+  # Computing annual Deviations from the long term mean
+  lapply(
+    \(data = "") {
+      data.frame(
+        Year = data[ ,1], 
+        Deviations = (data[ ,"Tmin"] - mean(data[ ,"Tmin"], na.rm = TRUE)) / sd(data[ ,"Tmin"], na.rm = TRUE)
+      )
+    }
+  )
+
+
+ggplot(data = Annual_MinTmp_Anomaly[["Koforidua"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
+  geom_linerange(data = Annual_MinTmp_Anomaly[["koforidua"]], aes(
+    colour = ifelse(Deviations > 0, "Positive", "Negative")),
+    stat = "identity", position = "identity", size = 4) +
+  geom_hline(yintercept = 0) +
+  labs(title = "Min Tmp Anomaly of Koforidua \n 1980 - 2021", x = "Year", y = expression("Temp ("~degree*C*")")) +
+  #scale_x_continuous(breaks = seq(from = 1980, to = 2021, by = 7)) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 30),
+        axis.title = element_text(size = 28, face = "bold"),
+        axis.text = element_text(size = 26),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 23))
+
+
+
+
+
+# Maximum and Minimum of Minimum Temperature ####
 lapply(
-  Stations_Tmax, # Data/List to loop over
+  Stations_Tmin, # Data/List to loop over
   
   # aninymous function to extract max temps in the 90th percentile
   \(data = "") {
     aggregate(
-      Tmax ~ format(data[ ,"Date"], format = "%Y"),
+      Tmin ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
-      FUN = \(vec = "") length(vec[vec > quantile(vec, probs = 0.9, na.rm = T)])
+      FUN = \(vec = "") length(vec[vec > quantile(vec, probs = 0.9, na.rm = TRUE) & !is.na(vec)])
     ) |> 
-      setNames(c("Year", "Tmax")) |> 
+      setNames(c("Year", "Tmin")) |> 
       transform(Year = as.numeric(Year))
   }
-) -> max_maximum_temp
+) -> max_minimum_temp
 
 
 # Plotting 
-ggplot(data = max_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
+ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
   geom_line(col = "firebrick", lwd = 2) +
-  scale_x_continuous(breaks = seq(1980, 2021, by = 5)) +
+  #scale_x_continuous(breaks = seq(1980, 2021, by = 5)) +
   labs(
-    title = "Number of Days with Max Tmp in the 90th percentile \n 1980 - 2021", 
+    title = "Number of Days with Min Tmp in the 90th percentile \n 1980 - 2021", 
     x = "Year", 
     y = expression("Temperature("~degree*C*")")
   ) + 
@@ -237,26 +277,26 @@ ggplot(data = max_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
 
 # Maximum and Minimum of Maximum Temperature ####
 lapply(
-  Stations_Tmax, # Data/List to loop over
+  Stations_Tmin, # Data/List to loop over
   
   # aninymous function to extract max temps in the 90th percentile
   \(data = "") {
     aggregate(
-      Tmax ~ format(data[ ,"Date"], format = "%Y"),
+      Tmin ~ format(data[ ,"Date"], format = "%Y"),
       data = data,
-      FUN = \(vec = "") length(vec[vec < quantile(vec, probs = 0.1, na.rm = T)])
+      FUN = \(vec = "") length(vec[vec < quantile(vec, probs = 0.1, na.rm = TRUE) & !is.na(vec)])
     ) |> 
-      setNames(c("Year", "Tmax")) |> 
+      setNames(c("Year", "Tmin")) |> 
       transform(Year = as.numeric(Year))
   }
-) -> min_maximum_temp
+) -> min_minimum_temp
 
 # Plotting 
-ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
+ggplot(data = min_minimum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
   geom_line(col = "firebrick", lwd = 2) +
-  scale_x_continuous(breaks = seq(1980, 2021, by = 5)) +
+  #scale_x_continuous(breaks = seq(1980, 2021, by = 5)) +
   labs(
-    title = "Number of Days with Max Tmp in the 10th percentile \n 1980 - 2021", 
+    title = "Number of Days with Min Tmp in the 10th percentile \n 1980 - 2021", 
     x = "Year", 
     y = expression("Temperature("~degree*C*")")
   ) + 
