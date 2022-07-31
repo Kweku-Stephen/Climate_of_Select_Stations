@@ -27,7 +27,7 @@ sapply(setdiff(pkgs, (.packages())), require, character.only = TRUE)
 
 
 # DATA IMPORT AND LIL RESHAPING ####
-# Importing all three Stations
+# Importing all three Stations #
 dir(path = "~/Climate_of_Select_Stations/Min_Tmp", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
   lapply(
     read.csv, # Reading in output of "dir"
