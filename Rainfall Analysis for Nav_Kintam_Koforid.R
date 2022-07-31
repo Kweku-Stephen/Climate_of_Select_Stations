@@ -593,7 +593,7 @@ runs <- function(vec = ""){
 runs_1 <- function(list = "") lapply(list, runs) |> . => do.call(rbind, .)
 
 # calling runs_1 to loop over the elements of the list "Stations"
- # Stations is a two level nested list
+ # Stations is a two level nested list on the second lapply call of this pipeline
 lapply(
 	Stations,
 	\(data = "") split(data[ ,"Rain"], as.factor(format(data[ ,"Date"], "%Y"))) %>% 
@@ -798,7 +798,7 @@ runs_wet <- function(vec = ""){
 runs_1_wet <- function(list = "") lapply(list, runs_wet) |> . => do.call(rbind, .)
 
 # calling runs_1 to loop over the elements of the list "Stations"
-# Stations is a two level nested list
+# Stations is a two level nested list on the second vectorised lapply call on this pipeline
 Stations |> 
 	lapply(
 		# Ananymous function to subset the months April to October only for each year
