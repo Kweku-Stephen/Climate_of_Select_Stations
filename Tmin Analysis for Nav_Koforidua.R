@@ -53,15 +53,6 @@ dir(path = "~/Climate_of_Select_Stations/Min_Tmp", pattern = ".csv$", full.names
 
 
 # Percentage of Missing Values for each year conditioned on Met Stations ####
-`NA_%`  <- function(vec = "") {
-  ((as.character(is.na(vec)) %>% .[. == "TRUE"] %>% length * 100) / length(vec)) %>% 
-    round(digits = 2) %>% 
-    paste0("%")
-}
-
-# Building a function which calls `NA_%` to loop over the vector elements of a list
-`NA_%_1` <- function(list = "") lapply(list, `NA_%`) |> . => do.call(rbind, .)
-
 # calling `NA_%_1` to loop over the elements of the list "Stations"
 # Stations is a two level nested list
 lapply(
@@ -93,7 +84,7 @@ lapply(
 # Plotting Annual Min Temp
 
 # Plotting Annual Min Temp
-ggplot(data = Annual_Min_Tmp[["Koforidua"]], aes(x = Year, y = Tmax)) + 
+ggplot(data = Annual_Min_Tmp[["Koforidua"]], aes(x = Year, y = Tmin)) + 
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
   ggtitle("Minimum Temperature of Koforidua \n 1980 - 2021") +
@@ -103,20 +94,7 @@ ggplot(data = Annual_Min_Tmp[["Koforidua"]], aes(x = Year, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20)) -> Koforidua_anntmin
 
-
-
-# Koforidua mean monthly Rainfall
-# ggplot(data = Monthly_Tmax[["Koforidua"]], aes(x = Date, y = Rain)) + 
-#   geom_line(lwd = 2, col = "darkblue") +
-#   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-#   ggtitle("Mean Monthly Rainfall of Koforidua \n 1965 - 2021") +
-#   xlab("Month") +
-#   ylab("Rainfall (mm)") +
-#   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
-#         axis.title = element_text(size = 22, face = "bold"),
-#         axis.text = element_text(size = 20)) -> Koforidua
-
-ggplot(data = Annual_min_Tmp[["Navrongo"]], aes(x = Year, y = Tmax)) +
+ggplot(data = Annual_min_Tmp[["Navrongo"]], aes(x = Year, y = Tmin)) +
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
   ggtitle("Monthly Minimum Temperature of Navrongo \n 1980 - 2021") +
@@ -134,6 +112,27 @@ gridExtra::grid.arrange(
 )
 
  
+# Summary Statistics of Maximum Temperature ####
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Annual_Minimum_Temperature` = summary_stats(
+    data = Annual_Min_Temp,
+    Station = names(Annual_Min_Temp),
+    var = "Tmin"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
+
+
+
+
+
+
 # Monthly Min Temp / climatology of the Stations ####
 # Computing mean monthly Max Temp Stations of the list/data "Stations"
 lapply(
@@ -162,19 +161,7 @@ lapply(
 # Date for x-axis
 Date <- seq(as.Date("1990-01-01"), as.Date("1990-12-31"), by = "month")
 
-# Plots for mean monthly Rainfall ####
-# Kintampo mean monthly Rainfall
-# ggplot(data = Monthly_Tmin[["Kintampo"]], aes(x = Date, y = Rain)) + 
-#   geom_line(lwd = 2, col = "darkblue") +
-#   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-#   ggtitle("Mean Monthly Rainfall of KIntampo \n 1944 - 2021") +
-#   xlab("Month") +
-#   ylab("Rainfall (mm)") +
-#   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
-#         axis.title = element_text(size = 22, face = "bold"),
-#         axis.text = element_text(size = 20)) -> Kintampo
-
-# Koforidua mean monthly Rainfall
+# Koforidua mean monthly min tmp
 ggplot(data = Monthly_Tmin[["Koforidua"]], aes(x = Date, y = Tmin)) + 
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
@@ -183,9 +170,9 @@ ggplot(data = Monthly_Tmin[["Koforidua"]], aes(x = Date, y = Tmin)) +
   ylab(expression("Temp ("~degree*C*")")) +
   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
         axis.title = element_text(size = 22, face = "bold"),
-        axis.text = element_text(size = 20)) -> Koforidua
+        axis.text = element_text(size = 20)) 
 
-Navrongo <- ggplot(data = Monthly_Tmin[["Navrongo"]], aes(x = Date, y = Rain)) +
+ggplot(data = Monthly_Tmin[["Navrongo"]], aes(x = Date, y = Tmin)) +
   geom_line(lwd = 2, col = "darkblue") +
   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
   ggtitle("Mean Monthly Rainfall of Navrongo \n 1946 - 2021") +
@@ -195,12 +182,26 @@ Navrongo <- ggplot(data = Monthly_Tmin[["Navrongo"]], aes(x = Date, y = Rain)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20))
 
-# Composites of Mean Monthly Rainfall
-# Kintampo / Koforidua / Navrongo
-gridExtra::grid.arrange(
-  Kintampo, Koforidua, Navrongo,
-  ncol = 2, nrow = 2
+
+# Summary Statistics for Mean monthly min temp
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Monthly Minimum Temperature` = summary_stats(
+    data = Monthly_Tmin,
+    Station = names(Monthly_Tmin),
+    var = "Tmin"
+  ) |> . =>
+    do.call(rbind, .)
 )
+
+sink(file = NULL)
+
+
+
+
+
+
 
 
 # Annual Minimum Tmp Anomaly ####
@@ -240,6 +241,23 @@ ggplot(data = Annual_MinTmp_Anomaly[["Koforidua"]], aes(x = Year, y = Deviations
         legend.title = element_blank(),
         legend.text = element_text(size = 23))
 
+# Summay Statistics for min tmp anomaly
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Annual Minimum Temperature Anomaly` = summary_stats(
+    data = Annual_MinTmp_Anomaly,
+    Station = names(Annual_MinTmp_Anomaly),
+    var = "Deviations"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
+
+
 
 
 
@@ -262,7 +280,7 @@ lapply(
 
 
 # Plotting 
-ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
+ggplot(data = max_minimum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
   geom_line(col = "firebrick", lwd = 2) +
   #scale_x_continuous(breaks = seq(1980, 2021, by = 5)) +
   labs(
@@ -273,6 +291,26 @@ ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20))
+
+# summary Statistics of max of minimum temperature
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `minimum of minimum Temperature` = summary_stats(
+    data = max_minimum_temp,
+    Station = names(max_minimum_temp),
+    var = "Tmin"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
+
+
+
+
 
 
 # Maximum and Minimum of Maximum Temperature ####
@@ -305,6 +343,18 @@ ggplot(data = min_minimum_temp[["Koforidua"]], aes(x = Year, y = Tmin)) +
         axis.text = element_text(size = 20))
 
 
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Minimum of minimum temperature` = summary_stats(
+    data = min_minimum_temp,
+    Station = names(min_minimum_temp),
+    var = "Tmin"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
 
 
 
