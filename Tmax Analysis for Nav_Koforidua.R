@@ -1,4 +1,8 @@
 #############################################################################################################
+# Sourcing Functions Script.R
+source("Functions Script.R")
+
+
 # Creating Directories ####
 for ( i in c("Data_outputs", "Plots_outputs")){
   if (!dir.exists(i)) dir.create(i) else message("Already Created")
@@ -55,18 +59,11 @@ dir(path = "~/Climate_of_Select_Stations/Max_Tmp", pattern = ".csv$", full.names
 #Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
 
 
+
+
 # Percentage of Missing Values for each year conditioned on Met Stations ####
-`NA_%`  <- function(vec = "") {
-  ((as.character(is.na(vec)) %>% .[. == "TRUE"] %>% length * 100) / length(vec)) %>% 
-    round(digits = 2) %>% 
-    paste0("%")
-}
 
-# Building a function which calls `NA_%` to loop over the vector elements of a list
-`NA_%_1` <- function(list = "") lapply(list, `NA_%`) |> . => do.call(rbind, .)
-
-# calling `NA_%_1` to loop over the elements of the list "Stations"
-# Stations is a two level nested list
+# calling `NA_%_1` to loop over the elements of the list "Stations" (Stations is a two level nested list)
 lapply(
   Stations_Tmax,
   # Lopping the ananymous function below on the elements of the list "stations_Tmax"
@@ -120,19 +117,6 @@ ggplot(data = Annual_Max_Temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20)) -> Koforidua_anntmax
 
-
-
-# Koforidua mean monthly Rainfall
-# ggplot(data = Monthly_Tmax[["Koforidua"]], aes(x = Date, y = Rain)) + 
-#   geom_line(lwd = 2, col = "darkblue") +
-#   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-#   ggtitle("Mean Monthly Rainfall of Koforidua \n 1965 - 2021") +
-#   xlab("Month") +
-#   ylab("Rainfall (mm)") +
-#   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
-#         axis.title = element_text(size = 22, face = "bold"),
-#         axis.text = element_text(size = 20)) -> Koforidua
-
 ggplot(data = Annual_Max_Temp[["Navrongo"]], aes(x = Year, y = Tmax)) +
   geom_line(lwd = 2, col = "firebrick") +
   #scale_x_date(date_labels = "%Y", date_breaks = "4 years") +
@@ -143,12 +127,25 @@ ggplot(data = Annual_Max_Temp[["Navrongo"]], aes(x = Year, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20)) -> Navrongo_anntmax
 
-# Composites of Mean Monthly Rainfall
-# Kintampo / Koforidua / Navrongo
-gridExtra::grid.arrange(
-  
-  ncol = 2, nrow = 2
+
+# Summary Stats for Annual Max Temp 
+# Diverting ouput from console to text file 
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Annual Maximum Temperature` =  summary_stats(
+    data = Annual_Max_Temp,
+    Station = names(Annual_Max_Temp),
+    var = "Tmax"
+  ) |> . =>
+    do.call(rbind, .) 
 )
+
+# Returning ouputs to console 
+sink()
+
+
+
 
 
 
@@ -187,17 +184,6 @@ ggplot(data = Monthly_Tmax[["Koforidua"]], aes(x = Date, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20)) -> Koforidua_mnthlytmax
 
-# Koforidua mean monthly Rainfall
-# ggplot(data = Monthly_Tmax[["Koforidua"]], aes(x = Date, y = Rain)) + 
-#   geom_line(lwd = 2, col = "darkblue") +
-#   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-#   ggtitle("Mean Monthly Rainfall of Koforidua \n 1965 - 2021") +
-#   xlab("Month") +
-#   ylab("Rainfall (mm)") +
-#   theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
-#         axis.title = element_text(size = 22, face = "bold"),
-#         axis.text = element_text(size = 20)) -> Koforidua
-
 ggplot(data = Monthly_Tmax[["Navrongo"]], aes(x = Date, y = Tmax)) +
   geom_line(lwd = 2, col = "firebrick") +
   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
@@ -208,12 +194,25 @@ ggplot(data = Monthly_Tmax[["Navrongo"]], aes(x = Date, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20)) -> Navrongo_mnthlytmax
 
-# Composites of Mean Monthly Rainfall
-# Kintampo / Koforidua / Navrongo
-gridExtra::grid.arrange(
+# Summary Stats for mean monthly max temp
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Monthly Maximum Temperature` = summary_stats(
+    data = Monthly_Tmax,
+    Station = names(Monthly_Tmax),
+    var = "Tmax"
+  ) |> . =>
+    do.call(rbind, .) 
   
-  ncol = 2, nrow = 2
 )
+
+# Returning ouputs to console 
+sink()
+
+
+
+
 
 
 
@@ -240,25 +239,9 @@ Annual_MaxTmp_Anomaly <- lapply(
   )
 
 
-# Plots for Rainfall Anomaly ####
-# Kintampo Rainfall Anomaly
-# Kintaampo_rr_anomaly <- ggplot(data = Annual_MaxTmp_Anomaly[["Kintampo"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
-#   geom_linerange(data = Annual_MaxTmp_Anomaly[["kintampo"]], aes(
-#     colour = ifelse(Deviations > 0, "Positive", "Negative")),
-#     stat = "identity", position = "identity", size = 4) +
-#   geom_hline(yintercept = 0) +
-#   labs(title = "Rainfall Anomaly of Kintampo \n 1944 - 2021", x = "Year", y = "Rainfall (mm)") +
-#   scale_x_continuous(breaks = seq(from = 1944, to = 2021, by = 11)) +
-#   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 30),
-#         axis.title = element_text(size = 28, face = "bold"),
-#         axis.text = element_text(size = 26),
-#         legend.title = element_blank(),
-#         legend.text = element_text(size = 23))
-
-
 
 # Koforidua Rainfall Anomaly
-Koforidua_rr_anomaly <- ggplot(data = Annual_MaxTmp_Anomaly[["Koforidua"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
+ggplot(data = Annual_MaxTmp_Anomaly[["Koforidua"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
   geom_linerange(data = Annual_MaxTmp_Anomaly[["koforidua"]], aes(
     colour = ifelse(Deviations > 0, "Positive", "Negative")),
     stat = "identity", position = "identity", size = 4) +
@@ -273,7 +256,7 @@ Koforidua_rr_anomaly <- ggplot(data = Annual_MaxTmp_Anomaly[["Koforidua"]], aes(
 
 
 # Navrongo Rainfall Anomaly
-Navrongo_rr_anomaly <- ggplot(data = Annual_MaxTmp_Anomaly[["Navrongo"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
+ggplot(data = Annual_MaxTmp_Anomaly[["Navrongo"]], aes(x = Year, y = Deviations, ymin = 0, ymax = Deviations)) +
   geom_linerange(data = Annual_MaxTmp_Anomaly[["Navrongo"]], aes(
     colour = ifelse(Deviations > 0, "Positive", "Negative")),
     stat = "identity", position = "identity", size = 4) +
@@ -300,6 +283,21 @@ dev.copy(
   height = 850
 )
 dev.off()
+
+# Summary Statistics of Maximum Temperature ####
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Anuual Maximum Temperature Anomaly` = summary_stats(
+    data = Annual_MaxTmp_Anomaly,
+    Station = names(Annual_MaxTmp_Anomaly),
+    var = "Deviations"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
+
 
 
 
@@ -343,6 +341,24 @@ ggplot(data = max_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
         axis.title = element_text(size = 22, face = "bold"),
         axis.text = element_text(size = 20))
 
+# Summary Statistics of Maximum Temperature ####
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Maximum of Daily Temperature` = summary_stats(
+    data = max_maximum_temp,
+    Station = names(max_maximum_temp),
+    var = "Tmax"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
+
+
+
 
 # Minimum of Maximum Temperature ####
 lapply(
@@ -385,6 +401,19 @@ ggplot(data = min_maximum_temp[["Koforidua"]], aes(x = Year, y = Tmax)) +
         axis.text = element_text(size = 20))
 
 
+# Summary Statistics of Maximum Temperature ####
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+  `Minimum of Daily Temperature` = summary_stats(
+    data = min_maximum_temp,
+    Station = names(min_maximum_temp),
+    var = "Tmax"
+  ) |> . =>
+    do.call(rbind, .)
+)
+
+sink(file = NULL)
 
 
 
