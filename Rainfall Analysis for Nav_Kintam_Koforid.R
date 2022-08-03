@@ -1,6 +1,9 @@
 #############################################################################################################
+# Sorucing Functions Script ####
+source("Functions Script.R")
+
 # Creating Directories ####
-for ( i in c("Data_outputs", "Plots_outputs")){
+for ( i in c("Data_outputs", "Plots_outputs", "Outputs")){
 	if (!dir.exists(i)) dir.create(i) else message("Already Created")
 }
 
@@ -41,15 +44,6 @@ dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.name
 #Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
 
 
-# Percentage of Missing Values for each year conditioned on Met Stations ####
-`NA_%`  <- function(vec = "") {
-	((as.character(is.na(vec)) %>% .[. == "TRUE"] %>% length * 100) / length(vec)) %>% 
-		round(digits = 2) %>% 
-		paste0("%")
-}
-
-# Building a function which calls `NA_%` to loop over the vector elements of a list
-`NA_%_1` <- function(list = "") lapply(list, `NA_%`) |> . => do.call(rbind, .)
 
 # calling `NA_%_1` to loop over the elements of the list "Stations"
 # Stations is a two level nested list
@@ -60,6 +54,8 @@ lapply(
 	lapply(
 		`NA_%_1`
 	) #-> perc_NA
+
+
 
 
 
@@ -75,6 +71,23 @@ lapply(
 		)
 	}
 ) -> Rainfall_Total
+
+
+# Summary Stats for Rainfall Total ####
+sink("Data_outputs/summary statisitcs.txt")
+
+list(
+	`Annual Rainfall Total` = summary_stats(
+		data = Rainfall_Total,
+		Station = names(Rainfall_Total),
+		var = "Rain"
+	) |> . =>
+		do.call(rbind, .) 
+)
+
+sink(file = NULL)
+
+
 
 
 # Mean Monthly Raifall / climatology of the Stations ####
@@ -143,13 +156,6 @@ Navrongo <- ggplot(data = mean_monthly_Rainfall[["Navrongo"]], aes(x = Date, y =
 		 axis.title = element_text(size = 22, face = "bold"),
 		 axis.text = element_text(size = 20))
 
-# Composites of Mean Monthly Rainfall
-# Kintampo / Koforidua / Navrongo
-gridExtra::grid.arrange(
-	Kintampo, Koforidua, Navrongo,
-	ncol = 2, nrow = 2
-)
-
 
 # Saving above plot to disk
 dev.copy(
@@ -161,44 +167,19 @@ dev.copy(
 dev.off()
 
 # Summary Statistics for Mean Monthly Rainfall ####
-data.frame(
-	Period = {
-		a = format(range(Stations[["Kintampo"]][, "Date"]), format = "%Y")
-		paste(a[1], a[2], sep = "-")
-	},
-	mean = mean(mean_monthly_Rainfall[["Kintampo"]][ ,"Rain"], na.rm = TRUE),
-	min = min(mean_monthly_Rainfall[["Kintampo"]][ ,"Rain"], na.rm = TRUE),
-	max = max(mean_monthly_Rainfall[["Kintampo"]][ ,"Rain"], na.rm = TRUE),
-	sd = sd(mean_monthly_Rainfall[["Kintampo"]][ ,"Rain"], na.rm = TRUE)
-) |>
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Koforidua"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(mean_monthly_Rainfall[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			min = min(mean_monthly_Rainfall[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			max = max(mean_monthly_Rainfall[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			sd = sd(mean_monthly_Rainfall[["Koforidua"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Navrongo"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(mean_monthly_Rainfall[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			min = min(mean_monthly_Rainfall[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			max = max(mean_monthly_Rainfall[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			sd = sd(mean_monthly_Rainfall[["Navrongo"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	write.csv(
-		file = "Plots_outputs/Mean Monthly Rainfall summ_Stats.csv",
-		row.names = FALSE
-	)
+ sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	`Mean Monthly Rainfall` = summary_stats(
+		data = mean_monthly_Rainfall,
+		Station = names(mean_monthly_Rainfall),
+		var = "Rain"
+	) |> . =>
+		do.call(rbind, .)
+)
+
+sink(file = NULL)
+
 
 
 
@@ -271,11 +252,6 @@ Navrongo_rr_anomaly <- ggplot(data = Annual_Rainfall_Anomaly[["Navrongo"]], aes(
 		 legend.title = element_blank(),
 		 legend.text = element_text(size = 23))
 
-# Composites of Raifnall Anomaly
-gridExtra::grid.arrange(
-	Kintaampo_rr_anomaly, Koforidua_rr_anomaly, Navrongo_rr_anomaly,
-	ncol = 2, nrow = 2
-)
 
 # Saving above plot to disk
 dev.copy(
@@ -287,44 +263,21 @@ dev.copy(
 dev.off()
 
 # Summary Statistics for Rainfall Total Anomaly ####
-data.frame(
-	Period = {
-		a = format(range(Stations[["Kintampo"]][, "Date"]), format = "%Y")
-		paste(a[1], a[2], sep = "-")
-	},
-	mean = mean(Annual_Rainfall_Anomaly[["Kintampo"]][ ,"Deviations"], na.rm = TRUE),
-	min = min(Annual_Rainfall_Anomaly[["Kintampo"]][ ,"Deviations"], na.rm = TRUE),
-	max = max(Annual_Rainfall_Anomaly[["Kintampo"]][ ,"Deviations"], na.rm = TRUE),
-	sd = sd(Annual_Rainfall_Anomaly[["Kintampo"]][ ,"Deviations"], na.rm = TRUE)
-) |>
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Koforidua"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_Rainfall_Anomaly[["Koforidua"]][ ,"Deviations"], na.rm = TRUE),
-			min = min(Annual_Rainfall_Anomaly[["Koforidua"]][ ,"Deviations"], na.rm = TRUE),
-			max = max(Annual_Rainfall_Anomaly[["Koforidua"]][ ,"Deviations"], na.rm = TRUE),
-			sd = sd(Annual_Rainfall_Anomaly[["Koforidua"]][ ,"Deviations"], na.rm = TRUE)
-		)
-	) |> 
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Navrongo"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_Rainfall_Anomaly[["Navrongo"]][ ,"Deviations"], na.rm = T),
-			min = min(Annual_Rainfall_Anomaly[["Navrongo"]][ ,"Deviations"], na.rm = T),
-			max = max(Annual_Rainfall_Anomaly[["Navrongo"]][ ,"Deviations"], na.rm = T),
-			sd = sd(Annual_Rainfall_Anomaly[["Navrongo"]][ ,"Deviations"], na.rm = TRUE)
-		)
-	) |> 
-	write.csv(
-		file = "Plots_outputs/Rainfall Total Anomaly summ_Stats.csv",
-		row.names = FALSE
-	)
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	`Annual Rainfall Anomaly` = summary_stats(
+		data = Annual_Rainfall_Anomaly,
+		Station = names(Annual_Rainfall_Anomaly),
+		var = "Deviations"
+	) |> . =>
+		do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
+
 
 
 # Rainy Days ">=" 20mm
@@ -396,11 +349,7 @@ ggplot(data = Annual_heavy_events[["Navrongo"]], aes(x = Year, y = Rain)) +
 		 axis.title = element_text(size = 22, face = "bold"),
 		 axis.text = element_text(size = 20)) -> Navrongo_heavy_events
 
-# Composites of heavy Raifnall events
-gridExtra::grid.arrange(
-	Kintampo_heavy_events, Koforidua_heavy_events, Navrongo_heavy_events,
-	ncol = 2, nrow = 2
-)
+
 # Saving above plot to disk
 dev.copy(
 	png, 
@@ -411,44 +360,20 @@ dev.copy(
 dev.off()
 
 # Summary Statistics for Heavy Rainfall Events ####
-data.frame(
-	Period = {
-		a = format(range(Stations[["Kintampo"]][, "Date"]), format = "%Y")
-		paste(a[1], a[2], sep = "-")
-	},
-	mean = mean(Annual_heavy_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	min = min(Annual_heavy_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	max = max(Annual_heavy_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	sd = sd(Annual_heavy_events[["Kintampo"]][ ,"Rain"], na.rm = TRUE)
-) |>
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Koforidua"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_heavy_events[["Koforidua"]][ ,"Rain"], na.rm = T),
-			min = min(Annual_heavy_events[["Koforidua"]][ ,"Rain"], na.rm = T),
-			max = max(Annual_heavy_events[["Koforidua"]][ ,"Rain"], na.rm = T),
-			sd = sd(Annual_heavy_events[["Koforidua"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Navrongo"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_heavy_events[["Navrongo"]][ ,"Rain"], na.rm = T),
-			min = min(Annual_heavy_events[["Navrongo"]][ ,"Rain"], na.rm = T),
-			max = max(Annual_heavy_events[["Navrongo"]][ ,"Rain"], na.rm = T),
-			sd = sd(Annual_heavy_events[["Navrongo"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	write.csv(
-		file = "Plots_outputs/Heavy Rainfall events summ_Stats.csv",
-		row.names = FALSE
-	)
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	`Annual heavy Ranfall Events` = summary_stats(
+		data = Annual_heavy_events,
+		Station = names(Annual_heavy_events),
+		var = "Rain"
+	) |> . =>
+		do.call(rbind, .)
+)
+
+sink(file = NULL)
+
+
 
 
 
@@ -522,12 +447,6 @@ ggplot(data = Annual_rain_events[["Navrongo"]], aes(x = Year, y = Rain)) +
 		 axis.text = element_text(size = 20)) -> Navrongo_rain_events
 
 
-# Composites of Raifnall Anomaly
-gridExtra::grid.arrange(
-	Kintampo_rain_events, Koforidua_rain_events, Navrongo_rain_events,
-	ncol = 2, nrow = 2
-)
-
 # Saving above plot to disk
 dev.copy(
 	png, 
@@ -538,59 +457,24 @@ dev.copy(
 dev.off()
 
 # Summary Stats for Rainfall Events ####
-data.frame(
-	Period = {
-		a = format(range(Stations[["Kintampo"]][, "Date"]), format = "%Y")
-		paste(a[1], a[2], sep = "-")
-	},
-	mean = mean(Annual_rain_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	min = min(Annual_rain_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	max = max(Annual_rain_events[["Kintampo"]][ ,"Rain"], na.rm = T),
-	sd = sd(Annual_rain_events[["Kintampo"]][ ,"Rain"], TRUE)
-) |>
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Koforidua"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_rain_events[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			min = min(Annual_rain_events[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			max = max(Annual_rain_events[["Koforidua"]][ ,"Rain"], na.rm = TRUE),
-			sd = sd(Annual_rain_events[["Koforidua"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	rbind(
-		data.frame(
-			Period = {
-				a = format(range(Stations[["Navrongo"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Annual_rain_events[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			min = min(Annual_rain_events[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			max = max(Annual_rain_events[["Navrongo"]][ ,"Rain"], na.rm = TRUE),
-			sd = sd(Annual_rain_events[["Navrongo"]][ ,"Rain"], na.rm = TRUE)
-		)
-	) |> 
-	write.csv(
-		file = "plots_outputs/Rainfall events summ_Stats.csv",
-		row.names = FALSE
-	)
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	Annual_rain_events = summary_stats(
+		data = Annual_rain_events,
+		Station = names(Annual_rain_events),
+		var = "Rain"
+	) |> . =>
+		do.call(rbind, .)
+)
+
+sink(file = NULL)
+
 
 
 
 
 # Longest Dry Spell Per year for All Stations ####
-# Run length encoding -- function to run length of zeroes in a vector
-runs <- function(vec = ""){
-	rle(vec) |> . => 
-		data.frame(v = .$value, l = .$lengths) %>% 
-		.[.$v == 0.0, ] %>% 
-		.[.$l == max(.$l), ]
-}
-
-# Building a function which calls runs to loop over the vector elements of a list
-runs_1 <- function(list = "") lapply(list, runs) |> . => do.call(rbind, .)
 
 # calling runs_1 to loop over the elements of the list "Stations"
  # Stations is a two level nested list on the second lapply call of this pipeline
@@ -682,24 +566,20 @@ ggplot(data = Longest_Dry_Spells[["Navrongo"]],
 		 axis.title = element_text(size = 22, face = "bold"),
 		 axis.text = element_text(size = 20)) -> Navrongo_Longest_DrySpell
 
+# Summary Stats for Longest Dry Spell for the entire year
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
 
-# Composites of Raifnall Anomaly
-# gridExtra::grid.arrange(
-# 	Kintampo_rain_events, Koforidua_rain_events, Navrongo_rain_events,
-# 	ncol = 2, nrow = 2
-# )
-# 
-# # Saving above plot to disk
-# dev.copy(
-# 	png, 
-# 	filename = "Plots_outputs/Rainall events.png",
-# 	width = 1450,
-# 	height = 850
-# )
-# dev.off()
+list(
+	`Longest_Dry_Spells` = 
+		summary_stats(
+			data = Longest_Dry_Spells,
+			Station = names(Longest_Dry_Spells),
+			var = "l"
+		) |> . =>
+		do.call(rbind, .)
+)
 
-# Onset of the Season ####
-
+sink(file = NULL)
 
 
 
@@ -741,61 +621,23 @@ Longest_Dry_Spells_Seasons %<>%
 
 
 # Summary Stats for Longest Dry spell of the Season ####
-data.frame(
-	Station = "Kintampo",
-	Period = {
-		a = format(range(Stations[["Kintampo"]][, "Date"]), format = "%Y")
-		paste(a[1], a[2], sep = "-")
-	},
-	mean = mean(Longest_Dry_Spells_Seasons[["Kintampo"]][ ,"l"], na.rm = T),
-	min = min(Longest_Dry_Spells_Seasons[["Kintampo"]][ ,"l"], na.rm = T),
-	max = max(Longest_Dry_Spells_Seasons[["Kintampo"]][ ,"l"], na.rm = T),
-	sd = sd(Longest_Dry_Spells_Seasons[["Kintampo"]][ ,"l"], TRUE)
-) |>
-	rbind(
-		data.frame(
-			Station = "Koforidua",
-			Period = {
-				a = format(range(Stations[["Koforidua"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Longest_Dry_Spells_Seasons[["Koforidua"]][ ,"l"], na.rm = TRUE),
-			min = min(Longest_Dry_Spells_Seasons[["Koforidua"]][ ,"l"], na.rm = TRUE),
-			max = max(Longest_Dry_Spells_Seasons[["Koforidua"]][ ,"l"], na.rm = TRUE),
-			sd = sd(Longest_Dry_Spells_Seasons[["Koforidua"]][ ,"l"], na.rm = TRUE)
-		)
-	) |> 
-	rbind(
-		data.frame(
-			Station = "Navrongo",
-			Period = {
-				a = format(range(Stations[["Navrongo"]][, "Date"]), format = "%Y")
-				paste(a[1], a[2], sep = "-")
-			},
-			mean = mean(Longest_Dry_Spells_Seasons[["Navrongo"]][ ,"l"], na.rm = TRUE),
-			min = min(Longest_Dry_Spells_Seasons[["Navrongo"]][ ,"l"], na.rm = TRUE),
-			max = max(Longest_Dry_Spells_Seasons[["Navrongo"]][ ,"l"], na.rm = TRUE),
-			sd = sd(Longest_Dry_Spells_Seasons[["Navrongo"]][ ,"l"], na.rm = TRUE)
-		)
-	) |> 
-	write.csv(
-		file = "plots_outputs/Longest_dry_spell_season_Stats.csv",
-		row.names = FALSE
-	)
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	`Longest_Dry_spell_ofthe_season` = summary_stats(
+		data = Longest_Dry_Spells_Seasons,
+		Station = names(Longest_Dry_Spells_Seasons),
+		var = "l"
+	) |> . =>
+		do.call(rbind, .)
+)
+
+sink()
+
+
 
 
 # Consecutive wet days of the season ####
-# Run length encoding -- function to run length of zeroes in a vector
-runs_wet <- function(vec = ""){
-	ifelse(vec < 0.85, FALSE, TRUE) |>
-		rle() |> . => 
-		data.frame(v = .$value, l = .$lengths) |> . =>
-		.[!.[ "v"] == FALSE, ] |>  . =>
-		.[.[, "l"] == max(.[ ,"l"]), ]
-}
-
-# Building a function which calls runs to loop over the vector elements of a list
-runs_1_wet <- function(list = "") lapply(list, runs_wet) |> . => do.call(rbind, .)
 
 # calling runs_1 to loop over the elements of the list "Stations"
 # Stations is a two level nested list on the second vectorised lapply call on this pipeline
@@ -832,3 +674,17 @@ Longest_wet_spell %<>%
 			} else data
 		}
 	)
+
+# Summary Stats for Longest wet spell in the season
+sink("Data_outputs/summary statisitcs.txt", append = TRUE, split = TRUE)
+
+list(
+	`Longest_Wet_Spell_of_theseason` = summary_stats(
+		data = Longest_wet_spell,
+		Station = names(Longest_wet_spell),
+		var = "l"
+	) |> . =>
+		do.call(rbind, .)
+)
+ 
+sink(file = NULL)
