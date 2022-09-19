@@ -1,5 +1,5 @@
 #############################################################################################################
-# Sorucing Functions Script ####
+# Sourcing Functions Script ####
 source("Functions Script.R")
 
 # Creating Directories ####
@@ -10,11 +10,8 @@ for ( i in c("Data_outputs", "Plots_outputs", "Outputs")){
 # loading magrittr 
 require(magrittr)
 
-# Introducing the pipebind operator
+# Invoking the pipebind operator
 Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
-
-
-
 
 
 
@@ -23,7 +20,8 @@ Sys.setenv("_R_USE_PIPEBIND_" = "true") # Invoking the pipebind operator
 dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.names = TRUE) |> # Reading in all datasets with names "Koforidu.csv, Kintampo.csv, navrong.csv"
 	lapply(
 		read.csv, # Reading in output of "dir"
-		na.strings = -99.9
+		header = TRUE,
+		na.strings = c("-99.9", "99.9", "-9999", "9999", "9988", "-9988")
 	) |> 
 	lapply(
 		# Looping the function below on each element of the list returned from above
@@ -36,13 +34,25 @@ dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$", full.name
 				.[.[ ,"Date"] >= "1980-01-01", ]
 		}
 	) |> 
-	setNames(c("Kintampo", "Koforidua", "Navrongo")) -> Stations # Renaming the list/output above
+	setNames(dir(path = "~/Climate_of_Select_Stations/Rainfall", pattern = ".csv$")) -> Stations # Renaming the list/output above
 
-# for efficiency, use rio::import_list instead of combining "lapply" and "read.csv" to read the datasets into R
+# Converting character class Rainfall observations to numerics
+suppressWarnings(
+	lapply(
+		Stations,
+		\(data = ""){
+			if(is.character(data[ ,"Rain"])){
+				transform(data, Rain = as.numeric(data[ ,"Rain"]))
+			} else data
+		}
+	),
+	classes = "warning"
+) -> Stations
 
-# Changing class of Koforidua Rain variable to "numeric"
-#Stations[["Koforidua"]][ ,"Rain"] <- as.numeric(Stations[["Koforidua"]][ ,"Rain"])
 
+
+# for efficiency, use rio::import_list instead of combining "lapply" and "read.csv" for reading in 
+# mulitiple datasets
 
 
 # calling `NA_%_1` to loop over the elements of the list "Stations"
@@ -72,9 +82,25 @@ lapply(
 	}
 ) -> Rainfall_Total
 
+# setting 2012 Cape Coast's Annual Rainfall value to NA
+Rainfall_Total[["capecoast_prcp.csv"]][
+	Rainfall_Total[["capecoast_prcp.csv"]][ ,"Rain"] <= 100, 
+	"Rain"
+] <- NA
+
+
+# Imputing missing values
+imputeTS::na_kalman(
+	Rainfall_Total[["capecoast_prcp.csv"]][ ,"Rain"],
+	model = "StructTS",
+	smooth = TRUE,
+	nit = -1
+) -> Rainfall_Total[["capecoast_prcp.csv"]][ ,"Rain"]
+
+
 
 # Summary Stats for Rainfall Total ####
-sink("Data_outputs/summary statisitcs.txt")
+sink("Data_outputs/summary statisitcs.txt", split = TRUE)
 
 list(
 	`Annual Rainfall Total` = summary_stats(
@@ -295,6 +321,20 @@ lapply(
 	)
 ) -> Annual_heavy_events
 
+# setting value for cape coast 2012 to NA
+dplyr::full_join(
+	Annual_heavy_events[["capecoast_prcp.csv"]],
+	data.frame(Year = 1980:2019)
+) |> . =>
+	.[order(.[ ,"Year"]), ] -> Annual_heavy_events[["capecoast_prcp.csv"]]
+
+Annual_heavy_events[["capecoast_prcp.csv"]][ ,"Rain"] %<>% imputeTS::na_kalman(
+		model = "StructTS",
+		smooth = TRUE, 
+		nit = -1
+	)
+	
+
 
 # Plots for Annual heavy events for all Stations ####
 # Kintampo Annual heavy events
@@ -391,6 +431,20 @@ lapply(
 			transform(., Year = as.numeric(.[, "Year"]))
 	)
 ) -> Annual_rain_events
+
+# setting value for cape coast 2012 to NA
+Annual_rain_events$capecoast_prcp.csv[
+	Annual_rain_events[["capecoast_prcp.csv"]][ ,"Year"] == 2012, "Rain"
+] <- NA 
+
+# imputing missing values using kalman filter for capecoast 2012
+Annual_rain_events[["capecoast_prcp.csv"]][ ,"Rain"] %<>% 
+	imputeTS::na_kalman(
+		model = "StructTS",
+		smooth = TRUE, 
+		nit = -1
+) 
+
 
 
 # Plots for Annual rainy days for all Stations ####
